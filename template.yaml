@@ -1,0 +1,65 @@
+AWSTemplateFormatVersion: "2010-09-09"
+Transform: AWS::Serverless-2016-10-31
+Description: hono-demo1 server (AWS Lambda + API Gateway)
+
+Parameters:
+  DatabaseUrl:
+    Type: String
+    NoEcho: true
+  CorsOrigin:
+    Type: String
+  VpcSubnetIds:
+    Type: CommaDelimitedList
+    Default: ""
+    Description: Private subnet IDs for Lambda (comma-separated)
+  VpcSecurityGroupIds:
+    Type: CommaDelimitedList
+    Default: ""
+    Description: Security group IDs for Lambda (comma-separated)
+
+Conditions:
+  HasVpc: !Not [!Equals [!Select [0, !Ref VpcSubnetIds], ""]]
+
+Globals:
+  Function:
+    Timeout: 30
+    MemorySize: 256
+    Runtime: nodejs20.x
+
+Resources:
+  ApiFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      Handler: lambda.handler
+      CodeUri: apps/server/dist/
+      Environment:
+        Variables:
+          DATABASE_URL: !Ref DatabaseUrl
+          CORS_ORIGIN: !Ref CorsOrigin
+          NODE_ENV: production
+      VpcConfig: !If
+        - HasVpc
+        - SubnetIds: !Ref VpcSubnetIds
+          SecurityGroupIds: !Ref VpcSecurityGroupIds
+        - !Ref AWS::NoValue
+      Policies:
+        - AWSLambdaVPCAccessExecutionRole
+      Events:
+        CatchAll:
+          Type: HttpApi
+          Properties:
+            Path: /{proxy+}
+            Method: ANY
+        Root:
+          Type: HttpApi
+          Properties:
+            Path: /
+            Method: ANY
+
+Outputs:
+  ApiUrl:
+    Description: API Gateway endpoint URL
+    Value: !Sub "https://${ServerlessHttpApi}.execute-api.${AWS::Region}.amazonaws.com"
+  FunctionArn:
+    Description: Lambda function ARN
+    Value: !GetAtt ApiFunction.Arn

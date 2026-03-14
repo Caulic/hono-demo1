@@ -36,7 +36,10 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: server-dist
-          path: apps/server/dist/
+          path: |
+            apps/server/dist/
+            template.yaml
+            samconfig.toml
 
       - name: Upload web artifact
         uses: actions/upload-artifact@v4
@@ -51,12 +54,8 @@ jobs:
       - uses: actions/download-artifact@v4
         with:
           name: server-dist
-          path: dist/
 
-      - name: Package Lambda function
-        run: |
-          cd dist
-          zip lambda.zip lambda.mjs
+      - uses: aws-actions/setup-sam@v2
 
       - uses: aws-actions/configure-aws-credentials@v4
         with:
@@ -64,17 +63,15 @@ jobs:
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           aws-region: ${{ secrets.AWS_REGION }}
 
-      - name: Deploy to Lambda
+      - name: SAM deploy
         run: |
-          aws lambda update-function-code \
-            --function-name ${{ secrets.LAMBDA_FUNCTION_NAME }} \
-            --zip-file fileb://dist/lambda.zip
-
-      - name: Update Lambda environment variables
-        run: |
-          aws lambda update-function-configuration \
-            --function-name ${{ secrets.LAMBDA_FUNCTION_NAME }} \
-            --environment "Variables={DATABASE_URL=${{ secrets.DATABASE_URL }},CORS_ORIGIN=${{ secrets.CORS_ORIGIN }},NODE_ENV=production}"
+          sam deploy \
+            --no-fail-on-empty-changeset \
+            --parameter-overrides \
+              DatabaseUrl=${{ secrets.DATABASE_URL }} \
+              CorsOrigin=${{ secrets.CORS_ORIGIN }} \
+              VpcSubnetIds="${{ secrets.VPC_SUBNET_IDS }}" \
+              VpcSecurityGroupIds="${{ secrets.VPC_SECURITY_GROUP_IDS }}"
 
   deploy-web:
     needs: build
