@@ -27,21 +27,6 @@ Globals:
     Runtime: nodejs22.x
 
 Resources:
-  ServerlessHttpApi:
-    Type: AWS::Serverless::HttpApi
-    Properties:
-      CorsConfiguration:
-        AllowOrigins:
-          - "*"
-        AllowMethods:
-          - GET
-          - POST
-          - PUT
-          - DELETE
-          - OPTIONS
-        AllowHeaders:
-          - Content-Type
-
   ApiFunction:
     Type: AWS::Serverless::Function
     Properties:
@@ -63,13 +48,11 @@ Resources:
         CatchAll:
           Type: HttpApi
           Properties:
-            ApiId: !Ref ServerlessHttpApi
             Path: /{proxy+}
             Method: ANY
         Root:
           Type: HttpApi
           Properties:
-            ApiId: !Ref ServerlessHttpApi
             Path: /
             Method: ANY
 
