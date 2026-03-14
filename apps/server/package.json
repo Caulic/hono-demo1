@@ -18,7 +18,9 @@
     "@orpc/server": "catalog:",
     "@orpc/zod": "catalog:",
     "dotenv": "catalog:",
+    "drizzle-orm": "^0.45.1",
     "hono": "catalog:",
+    "pg": "^8.20.0",
     "zod": "catalog:"
   },
   "devDependencies": {
