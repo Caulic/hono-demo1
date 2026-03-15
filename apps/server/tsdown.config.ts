@@ -4,6 +4,7 @@ export default defineConfig({
   entry: {
     index: "./src/index.ts",
     lambda: "./src/lambda.ts",
+    migrate: "./src/migrate.ts",
   },
   format: "esm",
   outDir: "./dist",

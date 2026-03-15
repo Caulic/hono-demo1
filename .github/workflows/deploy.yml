@@ -71,6 +71,7 @@ jobs:
             --parameter-overrides \
               DatabaseUrl=${{ secrets.DATABASE_URL }} \
               CorsOrigin=${{ secrets.CORS_ORIGIN }} \
+              SchemaVersion=${{ github.sha }} \
               VpcSubnetIds="${{ secrets.VPC_SUBNET_IDS }}" \
               VpcSecurityGroupIds="${{ secrets.VPC_SECURITY_GROUP_IDS }}"
 

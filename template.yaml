@@ -8,6 +8,10 @@ Parameters:
     NoEcho: true
   CorsOrigin:
     Type: String
+  SchemaVersion:
+    Type: String
+    Default: "1"
+    Description: Bump to force re-run migration
   VpcSubnetIds:
     Type: CommaDelimitedList
     Default: ""
@@ -55,6 +59,30 @@ Resources:
           Properties:
             Path: /
             Method: ANY
+
+  MigrateFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      Handler: migrate.handler
+      CodeUri: apps/server/dist/
+      Timeout: 60
+      Environment:
+        Variables:
+          DATABASE_URL: !Ref DatabaseUrl
+      VpcConfig: !If
+        - HasVpc
+        - SubnetIds: !Ref VpcSubnetIds
+          SecurityGroupIds: !Ref VpcSecurityGroupIds
+        - !Ref AWS::NoValue
+      Policies:
+        - AWSLambdaVPCAccessExecutionRole
+
+  DbMigration:
+    Type: Custom::DbMigration
+    DependsOn: MigrateFunction
+    Properties:
+      ServiceToken: !GetAtt MigrateFunction.Arn
+      SchemaVersion: !Ref SchemaVersion
 
 Outputs:
   ApiUrl:
