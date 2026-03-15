@@ -2,6 +2,7 @@ import { drizzle } from "drizzle-orm/node-postgres";
 import { migrate } from "drizzle-orm/node-postgres/migrator";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
+import pg from "pg";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
@@ -35,16 +36,18 @@ export const handler = async (event: any) => {
   }
 
   try {
-    const db = drizzle({
-      connection: {
-        connectionString: process.env.DATABASE_URL,
-        ssl: { rejectUnauthorized: false },
-      },
+    const pool = new pg.Pool({
+      connectionString: process.env.DATABASE_URL,
+      ssl: { rejectUnauthorized: false },
     });
+
+    const db = drizzle({ client: pool });
 
     await migrate(db, {
       migrationsFolder: path.join(__dirname, "migrations"),
     });
+
+    await pool.end();
 
     console.log("Migration completed successfully");
     await sendResponse(event, "SUCCESS");
