@@ -34,7 +34,6 @@ export default function Home() {
 	const queryClient = useQueryClient();
 
 	const [addToken, setAddToken] = useState("");
-	const [deleteToken, setDeleteToken] = useState("");
 
 	const usersQuery = useQuery({
 		queryKey: ["github-users"],
@@ -65,11 +64,11 @@ export default function Home() {
 	});
 
 	const deleteMutation = useMutation({
-		mutationFn: async (token: string) => {
+		mutationFn: async (id: number) => {
 			const res = await fetch(`${env.VITE_SERVER_URL}/api/delete_user`, {
 				method: "DELETE",
 				headers: { "Content-Type": "application/json" },
-				body: JSON.stringify({ token }),
+				body: JSON.stringify({ id }),
 			});
 			const data = await res.json();
 			if (!res.ok) throw new Error(data.error ?? "Failed to delete user");
@@ -78,7 +77,6 @@ export default function Home() {
 		onSuccess: (data) => {
 			toast.success(`已删除用户 ${data.login}`);
 			queryClient.invalidateQueries({ queryKey: ["github-users"] });
-			setDeleteToken("");
 		},
 		onError: (err: Error) => toast.error(err.message),
 	});
@@ -122,31 +120,6 @@ export default function Home() {
 						disabled={!addToken.trim() || addMutation.isPending}
 					>
 						{addMutation.isPending ? "添加中..." : "添加"}
-					</Button>
-				</div>
-			</section>
-
-			{/* Delete User */}
-			<section className="space-y-3 rounded-lg border p-4">
-				<h2 className="font-medium">删除 GitHub 用户</h2>
-				<div className="flex gap-2">
-					<Input
-						type="password"
-						placeholder="输入 GitHub Token"
-						value={deleteToken}
-						onChange={(e) => setDeleteToken(e.target.value)}
-						onKeyDown={(e) => {
-							if (e.key === "Enter" && deleteToken.trim()) {
-								deleteMutation.mutate(deleteToken.trim());
-							}
-						}}
-					/>
-					<Button
-						variant="destructive"
-						onClick={() => deleteMutation.mutate(deleteToken.trim())}
-						disabled={!deleteToken.trim() || deleteMutation.isPending}
-					>
-						{deleteMutation.isPending ? "删除中..." : "删除"}
 					</Button>
 				</div>
 			</section>
@@ -218,6 +191,15 @@ export default function Home() {
 									<span>关注 {user.following}</span>
 								</div>
 							</div>
+							<Button
+								variant="destructive"
+								size="sm"
+								className="shrink-0"
+								onClick={() => deleteMutation.mutate(user.id)}
+								disabled={deleteMutation.isPending}
+							>
+								删除
+							</Button>
 						</div>
 					))}
 				</div>

@@ -148,29 +148,16 @@ app.post("/api/add_user", async (c) => {
 });
 
 app.delete("/api/delete_user", async (c) => {
-  const body = await c.req.json<{ token: string }>();
-  const { token } = body;
+  const body = await c.req.json<{ id: number }>();
+  const { id } = body;
 
-  if (!token) {
-    return c.json({ error: "token is required" }, 400);
+  if (!id) {
+    return c.json({ error: "id is required" }, 400);
   }
-
-  const res = await fetch("https://api.github.com/user", {
-    headers: {
-      Authorization: `Bearer ${token}`,
-      Accept: "application/vnd.github+json",
-    },
-  });
-
-  if (!res.ok) {
-    return c.json({ error: "invalid token or GitHub API error" }, 400);
-  }
-
-  const user = await res.json() as { id: number; login: string };
 
   const deleted = await db
     .delete(githubUser)
-    .where(eq(githubUser.id, user.id))
+    .where(eq(githubUser.id, id))
     .returning({ id: githubUser.id, login: githubUser.login });
 
   if (deleted.length === 0) {
