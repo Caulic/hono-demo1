@@ -36,11 +36,12 @@ export const handler = async (event: any) => {
   }
 
   try {
-    const url = new URL(process.env.DATABASE_URL!);
-    url.searchParams.delete("sslmode");
+    const connStr = process.env.DATABASE_URL!
+      .replace(/\bsslmode=[^&]*&?/, "")
+      .replace(/[?&]$/, "");
 
     const pool = new pg.Pool({
-      connectionString: url.toString(),
+      connectionString: connStr,
       ssl: { rejectUnauthorized: false },
     });
 

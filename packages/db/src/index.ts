@@ -6,10 +6,11 @@ import * as schema from "./schema";
 
 function buildPool(connectionString: string, useSsl: boolean) {
   if (!useSsl) return new pg.Pool({ connectionString });
-  const url = new URL(connectionString);
-  url.searchParams.delete("sslmode");
+  const connStr = connectionString
+    .replace(/\bsslmode=[^&]*&?/, "")
+    .replace(/[?&]$/, "");
   return new pg.Pool({
-    connectionString: url.toString(),
+    connectionString: connStr,
     ssl: { rejectUnauthorized: false },
   });
 }
